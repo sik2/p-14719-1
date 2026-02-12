@@ -57,6 +57,23 @@ services:
       timeout: 5s
       retries: 5
 
+  api-gateway:
+    <<: *service-common
+    build:
+      <<: *build-common
+      args:
+        MODULE: api-gateway
+    container_name: api-gateway
+    image: sik2dev/p-14650-2:api-gateway
+    ports:
+      - "9000:9000"
+    depends_on:
+      - member-service
+      - post-service
+      - payout-service
+      - cash-service
+      - market-service
+
   member-service:
     <<: *service-common
     build:
