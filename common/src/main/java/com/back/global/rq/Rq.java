@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 
 @Component
@@ -21,7 +22,8 @@ public class Rq {
     private final HttpServletResponse resp;
 
     public SecurityUser getActor() {
-        return Optional.ofNullable(
+        // 1. SecurityContext에서 먼저 확인 (기존 방식)
+        SecurityUser actor = Optional.ofNullable(
                         SecurityContextHolder
                                 .getContext()
                                 .getAuthentication()
@@ -30,6 +32,24 @@ public class Rq {
                 .filter(principal -> principal instanceof SecurityUser)
                 .map(principal -> (SecurityUser) principal)
                 .orElse(null);
+
+        if (actor != null) {
+            return actor;
+        }
+
+        // 2. Gateway가 전달한 헤더에서 읽기
+        String userId = req.getHeader("X-User-Id");
+        if (userId == null || userId.isBlank()) {
+            return null;
+        }
+
+        return new SecurityUser(
+                Integer.parseInt(userId),
+                req.getHeader("X-User-Name"),
+                "",
+                req.getHeader("X-User-Nickname"),
+                Collections.emptyList()
+        );
     }
 
     public String getHeader(String name, String defaultValue) {
