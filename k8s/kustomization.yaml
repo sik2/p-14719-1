@@ -8,6 +8,7 @@ resources:
   - secret.yaml
   - redpanda.yaml
   - mysql.yaml
+  - api-gateway.yaml
   - member-service.yaml
   - post-service.yaml
   - payout-service.yaml
