@@ -1,5 +1,9 @@
 server:
   port: 8080
+
+springdoc:
+  server-url: http://localhost:9000
+
 spring:
   application:
     name: member-service

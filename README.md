@@ -92,9 +92,36 @@ dependencies {
 }
 ```
 
-> **Note**: Spring Cloud 2025.1.0에서 Gateway artifact 이름이 변경됨
-> - Before: `spring-cloud-starter-gateway`
-> - After: `spring-cloud-starter-gateway-server-webflux`
+> **Note**: Spring Boot 4.0.1 / Spring Framework 7.0 호환성 이슈
+>
+> **1. Spring Cloud 버전**
+> - Spring Boot 4.0.x는 Spring Cloud 2025.x 필요
+> - Gateway artifact 이름 변경: `spring-cloud-starter-gateway` → `spring-cloud-starter-gateway-server-webflux`
+>
+> **2. Repository 설정 필요**
+> ```kotlin
+> repositories {
+>     mavenCentral()
+>     maven { url = uri("https://repo.spring.io/release") }
+>     maven { url = uri("https://repo.spring.io/milestone") }
+> }
+> ```
+>
+> **3. springdoc-openapi 버전**
+> - springdoc-openapi 2.x는 Spring Framework 6.x 기반 (호환 안 됨)
+> - springdoc-openapi 3.0.x는 Spring Framework 7.x 지원
+> ```kotlin
+> implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:3.0.1")
+> ```
+>
+> **4. 라우팅 설정 prefix 변경**
+> ```yaml
+> # Before (Spring Cloud Gateway 4.x)
+> spring.cloud.gateway.routes
+>
+> # After (Spring Cloud Gateway 5.0)
+> spring.cloud.gateway.server.webflux.routes
+> ```
 
 ### 디렉토리 구조
 ```
@@ -575,25 +602,19 @@ Client → Gateway (swagger-ui.html)
               └─ /v3/api-docs/market → market-service:8084/v3/api-docs
 ```
 
----
+## CORS 및 서버 URL 설정
+Gateway 통합 Swagger에서 "Try it out" 기능 사용을 위한 설정
 
-# 0006 - Gateway CORS 및 Swagger 서버 URL 설정
-
-## 개요
-Gateway 통합 Swagger에서 "Try it out" 기능 사용을 위한 CORS 및 서버 URL 설정
-
-## 문제 상황
+### 문제 상황
 ```
 Swagger UI (localhost:9000)
     ↓ API 요청
 각 서비스 포트 (8080, 8081...) → CORS 에러
 ```
 
-## 해결 방법
+### 해결 방법
 1. 각 서비스의 OpenAPI 스펙에서 서버 URL을 Gateway로 설정
 2. Gateway에서 CORS 처리 (common에서 제거)
-
-## 변경 사항
 
 ### common/SwaggerConfig.java
 ```java
@@ -608,19 +629,19 @@ if (serverUrl != null && !serverUrl.isBlank()) {
 }
 ```
 
-### 각 서비스 application.yml
+### 각 서비스 springdoc.server-url 설정
 ```yaml
 springdoc:
   server-url: http://localhost:9000
 ```
 
-### 각 서비스 application-prod.yml
 ```yaml
+# application-prod.yml
 springdoc:
   server-url: ${GATEWAY_URL:http://api-gateway:9000}
 ```
 
-### api-gateway/SecurityConfig.java
+### api-gateway/SecurityConfig.java (CORS 설정)
 | 항목 | 변경 |
 |------|------|
 | allowedOrigins | localhost:9000 추가 |
@@ -628,13 +649,7 @@ springdoc:
 | 경로 | /api/** → /** |
 | OPTIONS 요청 | permitAll() 추가 |
 
-### common/SecurityConfig.java
-| 항목 | 변경 |
-|------|------|
-| CORS 설정 | 제거 (Gateway에서 처리) |
-| exceptionHandling | 제거 (Gateway에서 인증 처리) |
-
-## CORS 처리 위치
+### CORS 처리 위치
 ```
 Gateway 아키텍처에서 CORS는 Gateway에서만 처리
 
@@ -645,7 +660,7 @@ API Gateway (CORS 허용) ← 여기서만 CORS 설정
 백엔드 서비스들
 ```
 
-## 요청 흐름
+### 요청 흐름
 ```
 Swagger UI (localhost:9000/swagger-ui.html)
     ↓ springdoc.server-url 설정으로 Gateway로 요청
