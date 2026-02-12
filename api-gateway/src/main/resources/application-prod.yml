@@ -1,0 +1,35 @@
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: member-service
+              uri: http://member-service:8080
+              predicates:
+                - Path=/api/v1/member/**
+            - id: post-service
+              uri: http://post-service:8080
+              predicates:
+                - Path=/api/v1/post/**
+            - id: payout-service
+              uri: http://payout-service:8080
+              predicates:
+                - Path=/api/v1/payout/**
+            - id: cash-service
+              uri: http://cash-service:8080
+              predicates:
+                - Path=/api/v1/cash/**
+            - id: market-service
+              uri: http://market-service:8080
+              predicates:
+                - Path=/api/v1/market/**
+
+custom:
+  services:
+    member-url: http://member-service:8080
+
+logging:
+  level:
+    com.back: INFO
+    org.springframework.cloud.gateway: INFO

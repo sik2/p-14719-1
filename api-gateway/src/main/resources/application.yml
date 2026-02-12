@@ -1,0 +1,94 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: api-gateway
+  config:
+    import: optional:file:.env[.properties]
+  profiles:
+    active: dev
+  output:
+    ansi:
+      enabled: always
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: member-service
+              uri: http://localhost:8080
+              predicates:
+                - Path=/api/v1/member/**
+            - id: post-service
+              uri: http://localhost:8081
+              predicates:
+                - Path=/api/v1/post/**
+            - id: payout-service
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/v1/payout/**
+            - id: cash-service
+              uri: http://localhost:8083
+              predicates:
+                - Path=/api/v1/cash/**
+            - id: market-service
+              uri: http://localhost:8084
+              predicates:
+                - Path=/api/v1/market/**
+            # Swagger API Docs 라우팅
+            - id: member-service-docs
+              uri: http://localhost:8080
+              predicates:
+                - Path=/v3/api-docs/member
+              filters:
+                - RewritePath=/v3/api-docs/member, /v3/api-docs
+            - id: post-service-docs
+              uri: http://localhost:8081
+              predicates:
+                - Path=/v3/api-docs/post
+              filters:
+                - RewritePath=/v3/api-docs/post, /v3/api-docs
+            - id: payout-service-docs
+              uri: http://localhost:8082
+              predicates:
+                - Path=/v3/api-docs/payout
+              filters:
+                - RewritePath=/v3/api-docs/payout, /v3/api-docs
+            - id: cash-service-docs
+              uri: http://localhost:8083
+              predicates:
+                - Path=/v3/api-docs/cash
+              filters:
+                - RewritePath=/v3/api-docs/cash, /v3/api-docs
+            - id: market-service-docs
+              uri: http://localhost:8084
+              predicates:
+                - Path=/v3/api-docs/market
+              filters:
+                - RewritePath=/v3/api-docs/market, /v3/api-docs
+
+custom:
+  system:
+    apiKey: ${SYSTEM_API_KEY}
+  services:
+    member-url: http://localhost:8080
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: member-service
+        url: /v3/api-docs/member
+      - name: post-service
+        url: /v3/api-docs/post
+      - name: payout-service
+        url: /v3/api-docs/payout
+      - name: cash-service
+        url: /v3/api-docs/cash
+      - name: market-service
+        url: /v3/api-docs/market
+
+logging:
+  level:
+    com.back: DEBUG
+    org.springframework.cloud.gateway: DEBUG
